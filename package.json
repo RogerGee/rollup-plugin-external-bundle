@@ -1,0 +1,14 @@
+{
+  "name": "rollup-plugin-package-bundle",
+  "version": "1.0.0-dev",
+  "description": "Rollup plugin for loading package bundles and generating manifests",
+  "main": "src/index.js",
+  "scripts": {
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RogerGee/rollup-plugin-package-bundle.git"
+  },
+  "author": "Roger Gee",
+  "license": "MIT"
+}
