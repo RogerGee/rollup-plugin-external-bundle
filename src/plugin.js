@@ -8,17 +8,37 @@ const fs = require("fs");
 const path = require("path");
 const { format } = require("util");
 
+const { createManifest } = require("./manifest");
+
 const BUNDLE_PREFIX = "\0bundle:";
 const BUNDLE_EXTERN_PREFIX = "\0extern-bundle:";
+
+const DEFAULT_MANIFEST_OPTIONS = {
+  type: "json",
+  fileName: "templates/manifest.json",
+  sections: {
+    scripts: "\\.js$",
+    styles: "\\.css$"
+  }
+};
 
 class Plugin {
   constructor(_options) {
     const options = _options || {};
 
+    this.buildType = options.buildType || "local";
     this.nodeModulesPath = options.nodeModulesPath || "node_modules";
+    if (typeof options.manifestOptions === "undefined") {
+      this.manifestOptions = DEFAULT_MANIFEST_OPTIONS;
+    }
+    else {
+      this.manifestOptions = options.manifestOptions;
+    }
+
     this.packageJson = new Map();
     this.bundles = new Map();
     this.globals = {};
+    this.refs = [];
   }
 
   async resolveId(source,importer,options) {
@@ -45,7 +65,7 @@ class Plugin {
     if (!bundleInfo || typeof bundleInfo !== "object" || Array.isArray(bundleInfo)) {
       return null;
     }
-
+    console.log(bundleInfo);
     // If the bundle is valid (i.e. contains refs), then we add it to the
     // ordered map of bundles. This preserves the import order.
     if (bundleInfo.refs && Array.isArray(bundleInfo.refs)) {
@@ -77,6 +97,13 @@ class Plugin {
 
     // Make external bundle module ID.
     const bundleId = BUNDLE_EXTERN_PREFIX + id;
+
+    // Append bundle references to list.
+    for (const ref of bundleInfo.refs) {
+      if (this.buildType in ref) {
+        this.refs.push(ref[this.buildType]);
+      }
+    }
 
     // If a global was provided, load a virtual module that provides imports
     // and/or exports.
@@ -126,6 +153,29 @@ class Plugin {
 
   getGlobals() {
     return this.globals;
+  }
+
+  async createManifestFile() {
+    if (!this.manifestOptions) {
+      return;
+    }
+
+    const manifest = createManifest(this.refs,this.manifestOptions);
+    if (manifest.isEmpty()) {
+      return;
+    }
+
+    const blob = await manifest.generate();
+
+    return {
+      type: "asset",
+      fileName: this.manifestOptions.fileName,
+      source: blob
+    };
+  }
+
+  reset() {
+    this.refs = [];
   }
 }
 

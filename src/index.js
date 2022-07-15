@@ -10,7 +10,7 @@ function packageBundle(options) {
   const plugin = new Plugin(options);
 
   return {
-    name: "tccl-package-bundle",
+    name: "package-bundle",
 
     resolveId(source,importer,options) {
       return plugin.resolveId(source,importer,options);
@@ -25,6 +25,18 @@ function packageBundle(options) {
         options.globals = {};
       }
       Object.assign(options.globals,plugin.getGlobals());
+    },
+
+    async generateBundle(options,bundle) {
+      // Attempt manifest generation.
+      const file = await plugin.createManifestFile();
+      if (file) {
+        this.emitFile(file);
+      }
+
+      // Reset plugin refs so that next bundle will not contain refs that it
+      // does not reference.
+      plugin.reset();
     }
   };
 }
