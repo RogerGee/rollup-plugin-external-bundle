@@ -56,6 +56,8 @@ class Plugin {
 
       this.manifestOptions = clone(manifestOptions);
     }
+    this.prependRefs = options.prependRefs || [];
+    this.appendRefs = options.appendRefs || [];
 
     this.packageJson = new Map();
     this.bundles = new Map();
@@ -124,17 +126,14 @@ class Plugin {
 
     // Append bundle references to list.
     for (const refInfo of bundleInfo.refs) {
-      if (this.buildType in refInfo) {
-        let ref = refInfo[this.buildType];
-
-        // Local refs need to be prefixed under the package root. This is so
-        // that the asset under node_modules can be referenced.
-        if (this.buildType == "local") {
-          ref = xpath.join(bundleInfo.packageRoot,ref);
-        }
-
-        this.refs.push(ref);
+      // Local refs need to be prefixed under the package root. This is so
+      // that the asset under node_modules can be referenced.
+      let root;
+      if (this.buildType == "local") {
+        root = bundleInfo.packageRoot;
       }
+
+      this.addRef(refInfo,root);
     }
 
     // If a global was provided, load a virtual module that provides imports
@@ -186,6 +185,38 @@ class Plugin {
 
   getGlobals() {
     return this.globals;
+  }
+
+  addRef(refInfo,root,prepend) {
+    if (typeof refInfo === "string") {
+      this.refs.push(refInfo);
+    }
+    else if (this.buildType in refInfo) {
+      let ref = refInfo[this.buildType];
+
+      if (root) {
+        ref = xpath.join(root,ref);
+      }
+
+      if (prepend) {
+        this.refs.unshift(ref);
+      }
+      else {
+        this.refs.push(ref);
+      }
+    }
+  }
+
+  addAdditionalRefs(options) {
+    // Prepend additional references.
+    for (const refInfo of this.prependRefs) {
+      this.addRef(refInfo,null,true);
+    }
+
+    // Add additional references.
+    for (const refInfo of this.appendRefs) {
+      this.addRef(refInfo);
+    }
   }
 
   async createManifestFile() {

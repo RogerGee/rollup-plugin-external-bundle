@@ -25,6 +25,7 @@ function packageBundle(options) {
         options.globals = {};
       }
       Object.assign(options.globals,plugin.getGlobals());
+      plugin.addAdditionalRefs(options);
     },
 
     async generateBundle(options,bundle) {
