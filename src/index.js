@@ -21,14 +21,31 @@ function packageBundle(options) {
     },
 
     outputOptions(options) {
+      // Augment globals with globals pulled from bundle imports.
       if (!options.globals) {
         options.globals = {};
       }
       Object.assign(options.globals,plugin.getGlobals());
-      plugin.addAdditionalRefs(options);
     },
 
     async generateBundle(options,bundle) {
+      // Capture imports for each chunk.
+      for (const chunkName in bundle) {
+        const chunk = bundle[chunkName];
+        if (!chunk.imports) {
+          continue;
+        }
+
+        for (let i = 0;i < chunk.imports.length;++i) {
+          const id = chunk.imports[i];
+          plugin.captureImport(id);
+        }
+      }
+
+      // Generate manifest references. Currently, references are scoped to the
+      // bundle, not an individual chunk.
+      plugin.addBundleRefs();
+      plugin.addAdditionalRefs(options);
       plugin.addOutputRefs(options,bundle);
 
       // Attempt manifest generation.

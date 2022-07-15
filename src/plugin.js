@@ -62,6 +62,7 @@ class Plugin {
 
     this.packageJson = new Map();
     this.bundles = new Map();
+    this.importOrder = [];
     this.globals = {};
     this.refs = [];
   }
@@ -125,18 +126,6 @@ class Plugin {
     // Make external bundle module ID.
     const bundleId = BUNDLE_EXTERN_PREFIX + id;
 
-    // Append bundle references to list.
-    for (const refInfo of bundleInfo.refs) {
-      // Local refs need to be prefixed under the package root. This is so
-      // that the asset under node_modules can be referenced.
-      let root;
-      if (this.buildType == "local") {
-        root = bundleInfo.packageRoot;
-      }
-
-      this.addRef(refInfo,root);
-    }
-
     // If a global was provided, load a virtual module that provides imports
     // and/or exports.
     if (bundleInfo.global && typeof bundleInfo.global === "string") {
@@ -188,6 +177,12 @@ class Plugin {
     return this.globals;
   }
 
+  captureImport(id) {
+    if (id.startsWith(BUNDLE_EXTERN_PREFIX)) {
+      this.importOrder.push(id.slice(BUNDLE_EXTERN_PREFIX.length));
+    }
+  }
+
   addRef(refInfo,root,prepend) {
     if (typeof refInfo === "string") {
       this.refs.push(refInfo);
@@ -204,6 +199,27 @@ class Plugin {
       }
       else {
         this.refs.push(ref);
+      }
+    }
+  }
+
+  addBundleRefs() {
+    for (const id of this.importOrder) {
+      const bundleInfo = this.bundles.get(id);
+      if (!bundleInfo) {
+        continue;
+      }
+
+      // Append bundle references to list.
+      for (const refInfo of bundleInfo.refs) {
+        // Local refs need to be prefixed under the package root. This is so
+        // that the asset under node_modules can be referenced.
+        let root;
+        if (this.buildType == "local") {
+          root = bundleInfo.packageRoot;
+        }
+
+        this.addRef(refInfo,root);
       }
     }
   }
