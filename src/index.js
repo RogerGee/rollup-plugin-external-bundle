@@ -29,6 +29,8 @@ function packageBundle(options) {
     },
 
     async generateBundle(options,bundle) {
+      plugin.addOutputRefs(options,bundle);
+
       // Attempt manifest generation.
       const file = await plugin.createManifestFile();
       if (file) {

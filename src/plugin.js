@@ -58,6 +58,7 @@ class Plugin {
     }
     this.prependRefs = options.prependRefs || [];
     this.appendRefs = options.appendRefs || [];
+    this.disableOutputRefs = options.disableOutputRefs || false;
 
     this.packageJson = new Map();
     this.bundles = new Map();
@@ -216,6 +217,20 @@ class Plugin {
     // Add additional references.
     for (const refInfo of this.appendRefs) {
       this.addRef(refInfo);
+    }
+  }
+
+  addOutputRefs(options,bundle) {
+    if (this.disableOutputRefs) {
+      return;
+    }
+
+    for (const fileName in bundle) {
+      let ref = fileName;
+      if (options.dir) {
+        ref = xpath.join(options.dir,ref);
+      }
+      this.addRef(ref);
     }
   }
 
