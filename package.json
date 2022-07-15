@@ -3,12 +3,15 @@
   "version": "1.0.0-dev",
   "description": "Rollup plugin for loading package bundles and generating manifests",
   "main": "src/index.js",
-  "scripts": {
-  },
+  "scripts": {},
   "repository": {
     "type": "git",
     "url": "https://github.com/RogerGee/rollup-plugin-package-bundle.git"
   },
   "author": "Roger Gee",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "clone": "^2.1.2",
+    "markup-js": "^1.5.21"
+  }
 }

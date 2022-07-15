@@ -8,17 +8,31 @@ const fs = require("fs");
 const path = require("path");
 const { format } = require("util");
 
+const clone = require("clone");
+
 const { createManifest } = require("./manifest");
 
 const BUNDLE_PREFIX = "\0bundle:";
 const BUNDLE_EXTERN_PREFIX = "\0extern-bundle:";
 
 const DEFAULT_MANIFEST_OPTIONS = {
-  type: "json",
-  fileName: "templates/manifest.json",
-  sections: {
-    scripts: "\\.js$",
-    styles: "\\.css$"
+  "json": {
+    type: "json",
+    fileName: "manifest.json",
+    sections: {
+      scripts: "\\.js$",
+      styles: "\\.css$"
+    }
+  },
+
+  "html": {
+    type: "html",
+    template: false, // must be included by user
+    fileName: "manifest.html",
+    sections: {
+      scripts: "\\.js$",
+      styles: "\\.css$"
+    }
   }
 };
 
@@ -29,10 +43,17 @@ class Plugin {
     this.buildType = options.buildType || "local";
     this.nodeModulesPath = options.nodeModulesPath || "node_modules";
     if (typeof options.manifestOptions === "undefined") {
-      this.manifestOptions = DEFAULT_MANIFEST_OPTIONS;
+      this.manifestOptions = clone(DEFAULT_MANIFEST_OPTIONS["json"]);
     }
     else {
-      this.manifestOptions = options.manifestOptions;
+      const { type } = options.manifestOptions;
+      const manifestOptions = Object.assign(
+        {},
+        DEFAULT_MANIFEST_OPTIONS[type],
+        options.manifestOptions
+      );
+
+      this.manifestOptions = clone(manifestOptions);
     }
 
     this.packageJson = new Map();
@@ -65,7 +86,7 @@ class Plugin {
     if (!bundleInfo || typeof bundleInfo !== "object" || Array.isArray(bundleInfo)) {
       return null;
     }
-    console.log(bundleInfo);
+
     // If the bundle is valid (i.e. contains refs), then we add it to the
     // ordered map of bundles. This preserves the import order.
     if (bundleInfo.refs && Array.isArray(bundleInfo.refs)) {
@@ -165,11 +186,16 @@ class Plugin {
       return;
     }
 
+    let fileName = this.manifestOptions.fileName;
+    if (!fileName) {
+      return;
+    }
+
     const blob = await manifest.generate();
 
     return {
       type: "asset",
-      fileName: this.manifestOptions.fileName,
+      fileName,
       source: blob
     };
   }

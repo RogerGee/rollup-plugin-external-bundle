@@ -5,6 +5,7 @@
  */
 
 const { JsonManifest } = require("./json");
+const { HtmlManifest } = require("./html");
 const { PluginError } = require("../error");
 
 /**
@@ -13,9 +14,18 @@ const { PluginError } = require("../error");
 function createManifest(refs,options) {
   const { type } = options;
 
-  switch (type) {
-    case "json":
-      return new JsonManifest(refs,options);
+  try {
+    switch (type) {
+      case "json":
+        return new JsonManifest(refs,options);
+      case "html":
+        return new HtmlManifest(refs,options);
+    }
+  } catch (err) {
+    if (err instanceof PluginError) {
+      throw new PluginError("'manifestOptions' with type '%s': %s",type,err.message);
+    }
+    throw err;
   }
 
   throw new PluginError("Manifest type '%s' is invalid",type);
