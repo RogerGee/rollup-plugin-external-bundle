@@ -6,6 +6,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const xpath = path.posix;
 const { format } = require("util");
 
 const clone = require("clone");
@@ -75,10 +76,12 @@ class Plugin {
       return BUNDLE_PREFIX + source;
     }
 
-    const packageJson = await this.getPackageInfo(source);
-    if (!packageJson) {
+    const packageInfo = await this.getPackageInfo(source);
+    if (!packageInfo) {
       return null;
     }
+
+    const { packageRoot, packageJson } = packageInfo;
 
     // Use non-standard 'bundles' (or 'bundle') property to pull
     // information.
@@ -91,7 +94,7 @@ class Plugin {
     // ordered map of bundles. This preserves the import order.
     if (bundleInfo.refs && Array.isArray(bundleInfo.refs)) {
       // Remember root directory relative to project tree for later.
-      bundleInfo.root = path.join(this.nodeModulesPath,source).replace(/\\/g,"/");
+      bundleInfo.packageRoot = packageRoot.replace(/\\/g,"/");
 
       this.bundles.set(source,bundleInfo);
 
@@ -120,9 +123,17 @@ class Plugin {
     const bundleId = BUNDLE_EXTERN_PREFIX + id;
 
     // Append bundle references to list.
-    for (const ref of bundleInfo.refs) {
-      if (this.buildType in ref) {
-        this.refs.push(ref[this.buildType]);
+    for (const refInfo of bundleInfo.refs) {
+      if (this.buildType in refInfo) {
+        let ref = refInfo[this.buildType];
+
+        // Local refs need to be prefixed under the package root. This is so
+        // that the asset under node_modules can be referenced.
+        if (this.buildType == "local") {
+          ref = xpath.join(bundleInfo.packageRoot,ref);
+        }
+
+        this.refs.push(ref);
       }
     }
 
@@ -155,7 +166,8 @@ class Plugin {
       return this.packageJson.get(source);
     }
 
-    const packagePath = path.join(this.nodeModulesPath,source,"package.json");
+    const packageRoot = path.join(this.nodeModulesPath,source);
+    const packagePath = path.join(packageRoot,"package.json");
     return new Promise((resolve,reject) => {
       fs.readFile(packagePath,(err,data) => {
         if (err) {
@@ -163,7 +175,7 @@ class Plugin {
         }
         else {
           try {
-            resolve(JSON.parse(data));
+            resolve({ packageRoot, packageJson: JSON.parse(data) });
           } catch (err) {
             console.warn("Failed to parse JSON in '%s'",packagePath);
           }
