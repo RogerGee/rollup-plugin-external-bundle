@@ -7,7 +7,7 @@
 const fs = require("fs");
 const path = require("path");
 const xpath = path.posix;
-const { format } = require("util");
+const { format, promisify } = require("util");
 
 const clone = require("clone");
 
@@ -80,7 +80,12 @@ class Plugin {
       return BUNDLE_PREFIX + source;
     }
 
-    const packageInfo = await this.getPackageInfo(source);
+    let context = "";
+    if (typeof importer === "string") {
+      context = path.dirname(importer);
+    }
+
+    const packageInfo = await this.getPackageInfo(source,context);
     if (!packageInfo) {
       return null;
     }
@@ -97,12 +102,21 @@ class Plugin {
     // If the bundle is valid (i.e. contains refs), then we add it to the
     // ordered map of bundles. This preserves the import order.
     if (bundleInfo.refs && Array.isArray(bundleInfo.refs)) {
+      // Normalize the source string if it is a relative path.
+      let id;
+      if (source[0] == "." && context) {
+        id = xpath.resolve(context,source);
+      }
+      else {
+        id = source;
+      }
+
       // Remember root directory relative to project tree for later.
       bundleInfo.packageRoot = packageRoot.replace(/\\/g,"/");
 
-      this.bundles.set(source,bundleInfo);
+      this.bundles.set(id,bundleInfo);
 
-      return BUNDLE_PREFIX + source;
+      return BUNDLE_PREFIX + id;
     }
 
     return null;
@@ -150,27 +164,51 @@ class Plugin {
     return format("import '%s';\n",bundleId);
   }
 
-  async getPackageInfo(source) {
-    if (this.packageJson.has(source)) {
-      return this.packageJson.get(source);
+  async getPackageInfo(source,context) {
+    const readFile = promisify(fs.readFile);
+    const candidates = [];
+
+    // Resolve relative source paths against the context (i.e. parent
+    // directory).
+    if (source[0] == "." && context) {
+      candidates.push(path.resolve(path.join(context,source)));
+    }
+    else {
+      // Otherwise resolve against the node_modules directory.
+      candidates.push(path.join(this.nodeModulesPath,source));
     }
 
-    const packageRoot = path.join(this.nodeModulesPath,source);
-    const packagePath = path.join(packageRoot,"package.json");
-    return new Promise((resolve,reject) => {
-      fs.readFile(packagePath,(err,data) => {
-        if (err) {
-          resolve(null);
+    for (const packageRoot of candidates) {
+      if (this.packageJson.has(packageRoot)) {
+        return this.packageJson.get(packageRoot);
+      }
+
+      const packagePath = path.join(packageRoot,"package.json");
+
+      try {
+        const data = await readFile(packagePath);
+
+        try {
+          const entry = {
+            packageRoot,
+            packageJson: JSON.parse(data)
+          };
+
+          this.packageJson.set(packageRoot,entry);
+
+          return entry;
+
+        } catch (err) {
+          console.warn("Failed to parse JSON in '%s'",packagePath);
         }
-        else {
-          try {
-            resolve({ packageRoot, packageJson: JSON.parse(data) });
-          } catch (err) {
-            console.warn("Failed to parse JSON in '%s'",packagePath);
-          }
-        }
-      });
-    });
+
+      } catch (ex) {
+        // File not found.
+        continue;
+      }
+    }
+
+    return null;
   }
 
   getGlobals() {
