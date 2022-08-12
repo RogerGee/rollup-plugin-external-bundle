@@ -254,7 +254,7 @@ class Plugin {
         // that the asset under node_modules can be referenced.
         let root;
         if (this.buildType == "local") {
-          root = bundleInfo.packageRoot;
+          root = xpath.relative('.',bundleInfo.packageRoot);
         }
 
         this.addRef(refInfo,root);
