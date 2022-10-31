@@ -1,7 +1,7 @@
 /**
  * error.js
  *
- * rollup-plugin-package-bundle
+ * rollup-plugin-external-bundle
  */
 
 const { format } = require("util");

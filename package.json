@@ -1,12 +1,12 @@
 {
-  "name": "rollup-plugin-package-bundle",
+  "name": "rollup-plugin-external-bundle",
   "version": "1.0.0-dev",
-  "description": "Rollup plugin for loading package bundles and generating manifests",
+  "description": "Rollup plugin that generates manifests referencing external bundles",
   "main": "src/index.js",
   "scripts": {},
   "repository": {
     "type": "git",
-    "url": "https://github.com/RogerGee/rollup-plugin-package-bundle.git"
+    "url": "https://github.com/RogerGee/rollup-plugin-external-bundle.git"
   },
   "author": "Roger Gee",
   "license": "MIT",

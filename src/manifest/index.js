@@ -1,7 +1,7 @@
 /**
  * manifest/index.js
  *
- * rollup-plugin-package-bundle
+ * rollup-plugin-external-bundle
  */
 
 const { JsonManifest } = require("./json");

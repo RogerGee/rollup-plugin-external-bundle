@@ -1,7 +1,7 @@
 /**
  * manifest/html.js
  *
- * rollup-plugin-package-bundle
+ * rollup-plugin-external-bundle
  */
 
 const mark = require("markup-js");

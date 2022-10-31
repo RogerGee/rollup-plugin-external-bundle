@@ -1,12 +1,12 @@
 /**
  * main.js
  *
- * rollup-plugin-package-bundle
+ * rollup-plugin-external-bundle
  */
 
 const { Plugin } = require("./plugin.js");
 
-function packageBundle(options) {
+function externalBundle(options) {
   const plugin = new Plugin(options);
 
   return {
@@ -62,6 +62,6 @@ function packageBundle(options) {
 }
 
 module.exports = {
-  packageBundle,
-  default: packageBundle
+  externalBundle,
+  default: externalBundle
 };

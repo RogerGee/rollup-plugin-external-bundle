@@ -1,7 +1,7 @@
 /**
  * plugin.js
  *
- * rollup-plugin-package-bundle
+ * rollup-plugin-external-bundle
  */
 
 const fs = require("fs");

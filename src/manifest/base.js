@@ -1,7 +1,7 @@
 /**
  * manifest/base.js
  *
- * rollup-plugin-package-bundle
+ * rollup-plugin-external-bundle
  */
 
 const { PluginError } = require("../error");

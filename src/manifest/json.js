@@ -1,7 +1,7 @@
 /**
  * manifest/json.js
  *
- * rollup-plugin-package-bundle
+ * rollup-plugin-external-bundle
  */
 
 const { ManifestBase } = require("./base");
