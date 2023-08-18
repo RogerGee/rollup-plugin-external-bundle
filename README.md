@@ -85,6 +85,7 @@ Object; defaults to a `json`-type manifest
 Configures the manifest options. Generic properties include:
 - `type`: The type of manifest to generate
 	- `json`: Generates a JSON file
+	- `php`: Generates a PHP manifest file
 	- `html`: Generates an HTML file from a template; the template uses [markup-js](https://www.npmjs.com/package/markup-js) to format reference names
 - `fileName`: The name of the manifest output file
 - `sections`: Object where the keys define the section names and the values are regular expressions that match references to assign to the sections

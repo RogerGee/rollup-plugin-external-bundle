@@ -5,6 +5,7 @@
  */
 
 const { JsonManifest } = require("./json");
+const { PhpManifest } = require("./php");
 const { HtmlManifest } = require("./html");
 const { PluginError } = require("../error");
 
@@ -18,6 +19,8 @@ function createManifest(refs,options) {
     switch (type) {
       case "json":
         return new JsonManifest(refs,options);
+      case "php":
+        return new PhpManifest(refs,options);
       case "html":
         return new HtmlManifest(refs,options);
     }

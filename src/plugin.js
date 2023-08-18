@@ -26,6 +26,15 @@ const DEFAULT_MANIFEST_OPTIONS = {
     }
   },
 
+  "php": {
+    type: "php",
+    fileName: "manifest.php",
+    sections: {
+      scripts: "\\.js$",
+      styles: "\\.css$"
+    }
+  },
+
   "html": {
     type: "html",
     template: false, // must be included by user
